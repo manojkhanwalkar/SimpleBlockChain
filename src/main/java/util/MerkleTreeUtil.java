@@ -4,11 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import data.Transaction;
-import shareablemerkletree.*;
+import blockchain.merkletree.*;
 
 import java.io.IOException;
 import java.security.MessageDigest;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -91,7 +90,7 @@ public class MerkleTreeUtil {
         If attribu node - add a LeafHashNode and put in the queue .
         if leaf hashnode , take another leaf has node - create a hashnode and put in the queue
         if hashnode and there is more in the queue , take another hash node and create a hashnode as parent and put in the queue
-        if last hashnode - create a merkletree and set this node as the root and return the merkle tree so created.
+        if last hashnode - create a blockchain.merkletree and set this node as the root and return the merkle tree so created.
          */
 
         queue.addAll(attribNodes);

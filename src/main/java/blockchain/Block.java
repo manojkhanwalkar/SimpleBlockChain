@@ -2,12 +2,9 @@ package blockchain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import data.Transaction;
-import shareablemerkletree.MerkleTree;
-import util.MerkleTreeUtil;
+import blockchain.merkletree.MerkleTree;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class Block {
 

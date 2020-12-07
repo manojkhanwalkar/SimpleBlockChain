@@ -1,4 +1,4 @@
-package shareablemerkletree;
+package blockchain.merkletree;
 
 public class MerkleTree {
 
