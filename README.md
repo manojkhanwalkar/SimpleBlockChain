@@ -37,7 +37,6 @@ c. The BCN receives the transaction and does the following
    
 4. The in memory structure uses Merkle tree and disk based files form a block chain. The index is a bloom filter on the transactionid. The file naming conventions make it easy to narrow down the search for a transaction.
 
-The details of the BCN internals are explained separately below.
 
 2. Querying the transaction details of a recorded transaction
    
