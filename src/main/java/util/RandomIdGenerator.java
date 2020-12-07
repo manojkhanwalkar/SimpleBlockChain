@@ -5,8 +5,8 @@ import java.security.SecureRandom;
 public class RandomIdGenerator {
 
     static SecureRandom secureRandom = new SecureRandom();
-    public static int getId()
+    public static String getId()
     {
-        return secureRandom.nextInt();
+        return String.valueOf(secureRandom.nextInt());
     }
 }

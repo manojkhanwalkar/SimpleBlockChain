@@ -8,13 +8,13 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
         property = "id")
 public class HashNode implements Node {
 
-    int id;
+    String id;
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 

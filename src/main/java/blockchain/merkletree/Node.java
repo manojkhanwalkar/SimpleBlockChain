@@ -25,8 +25,8 @@ public interface Node {
         return null;
     }
 
-    public int getId();
-    public void setId(int id);
+    public String getId();
+    public void setId(String id);
 
     public default String getValue()
     {

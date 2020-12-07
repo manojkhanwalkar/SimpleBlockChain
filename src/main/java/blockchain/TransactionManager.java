@@ -14,7 +14,7 @@ public class TransactionManager {
         static TransactionManager INSTANCE = new TransactionManager();
     }
 
-    final static int MAX = 4;
+    public final static int MAX = 16;
 
     List<Transaction> transactionList = new ArrayList<>(MAX);
     private TransactionManager()

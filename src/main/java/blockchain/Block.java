@@ -3,6 +3,7 @@ package blockchain;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import data.Transaction;
 import blockchain.merkletree.MerkleTree;
+import util.MerkleTreeUtil;
 
 import java.util.List;
 
@@ -23,11 +24,10 @@ public class Block {
 
     public Block(List<Transaction> transactions)
     {
-//TODO - fix this
-        /*
-        MerkleTreeUtil mtu = new MerkleTreeUtil(transactions);
-        tree = mtu.merkle_tree();
-*/
+
+        MerkleTreeUtil mtu = new MerkleTreeUtil();
+        tree = mtu.build(transactions);
+
     }
 
 

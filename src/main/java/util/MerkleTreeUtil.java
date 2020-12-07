@@ -64,7 +64,8 @@ public class MerkleTreeUtil {
         var leaves = transactions.stream().map(t->{
            LeafHashNode leafHashNode = new LeafHashNode();
            leafHashNode.setTransaction(t);
-            leafHashNode.setId(RandomIdGenerator.getId());
+            //leafHashNode.setId(RandomIdGenerator.getId());
+            leafHashNode.setId(t.getTransactionId());
             leafHashNode.setHash(getSHA2HexValue(t.toString()));
 
             return leafHashNode;
@@ -384,7 +385,7 @@ public class MerkleTreeUtil {
 
 
 
-
+/*
 
     public static Set<AttributeNode> getAttributes(MerkleTree tree)
     {
@@ -394,8 +395,8 @@ public class MerkleTreeUtil {
         return fields;
 
     }
-
-
+*/
+/*
     private static void traverseTreeAndCollectFields(Node node , Set<AttributeNode> fields)
     {
 
@@ -417,7 +418,7 @@ public class MerkleTreeUtil {
 
     }
 
-
+*/
 
 
 

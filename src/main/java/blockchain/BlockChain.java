@@ -37,8 +37,7 @@ public class BlockChain {
     {
         String hash = blocks.get(blocks.size()-1).rootHash;
         block.prevHash = hash;
-      //TODO - fix this
-        // block.rootHash = getSHA2HexValue(block.prevHash+block.tree.root.getHash());
+        block.rootHash = getSHA2HexValue(block.prevHash+block.tree.getRoot().getHash());
         blocks.add(block);
 
 

@@ -36,7 +36,8 @@ public class TransactionBlockChainManager {
     protected synchronized void add(Block block)
     {
         blockChain.add(block);
-        persist(block);
+        //TODO - fix this
+       // persist(block);
     }
 
 
@@ -50,7 +51,8 @@ public class TransactionBlockChainManager {
     {
         blockChain= new BlockChain();
         blockChain.bootstrap();
-        persist(blockChain.getBlocks().get(0));
+        //TODO - fix this
+        //persist(blockChain.getBlocks().get(0));
     }
 
     public synchronized void restore()
