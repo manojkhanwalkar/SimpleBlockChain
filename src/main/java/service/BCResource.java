@@ -1,10 +1,12 @@
 package service;
 
 
+import blockchain.TransactionManager;
 import com.codahale.metrics.annotation.Timed;
 import data.Transaction;
 import data.TransactionQuery;
 import data.TransactionResponse;
+import wal.WALManager;
 
 
 import javax.ws.rs.POST;
@@ -29,10 +31,10 @@ public class BCResource {
 
     }
 
+    String nodeName = "bcn1" ; //TODO - to take this from the configuration
 
-
-
-
+    WALManager walManager = new WALManager(nodeName,"/home/manoj/data/sbc/wal/");
+    TransactionManager transactionManager = TransactionManager.getInstance();
 
     @POST
     @Timed
@@ -40,8 +42,12 @@ public class BCResource {
     @Produces(MediaType.APPLICATION_JSON)
     public TransactionResponse submit(Transaction request) {
 
+        walManager.submit(request);
+        var id = transactionManager.submit(request,nodeName);
 
-        return null;
+        var response = new TransactionResponse();
+        response.setTransactionId(id);
+        return response;
 
     }
 
