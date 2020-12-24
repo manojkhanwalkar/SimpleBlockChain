@@ -27,13 +27,15 @@ public class BCResource {
         this.template = template;
         this.defaultName = defaultName;
 
-
+        walManager.init();
 
     }
 
     String nodeName = "bcn1" ; //TODO - to take this from the configuration
 
     WALManager walManager = new WALManager(nodeName,"/home/manoj/data/sbc/wal/");
+
+
     TransactionManager transactionManager = TransactionManager.getInstance();
 
     @POST
