@@ -44,11 +44,14 @@ public class BCResource {
     @Produces(MediaType.APPLICATION_JSON)
     public TransactionResponse submit(Transaction request) {
 
+        String tranId = nodeName +"-" + System.nanoTime();
+        request.setTransactionId(tranId);
+
         walManager.submit(request);
-        var id = transactionManager.submit(request,nodeName);
+        transactionManager.submit(request,nodeName);
 
         var response = new TransactionResponse();
-        response.setTransactionId(id);
+        response.setTransactionId(tranId);
         return response;
 
     }

@@ -29,10 +29,8 @@ public class TransactionManager {
 
 
     int count = 0;
-    public synchronized String submit(Transaction transaction, String nodeName)
+    public synchronized void submit(Transaction transaction, String nodeName)
     {
-        String tranId = nodeName +"-" + System.nanoTime();
-        transaction.setTransactionId(tranId);
 
         transactionList.add(transaction);
         count++;
@@ -43,7 +41,7 @@ public class TransactionManager {
             transactionList = new ArrayList<>(MAX);
         }
 
-        return tranId;
+
 
     }
 }
