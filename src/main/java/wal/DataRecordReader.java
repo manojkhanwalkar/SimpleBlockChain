@@ -1,5 +1,6 @@
 package wal;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
@@ -12,16 +13,12 @@ public class DataRecordReader {
 
 
 
-    String fileName;  // = "/home/manoj/data/aero/datafile";
-
-
-
     RandomAccessFile reader;
 
     public DataRecordReader(String fileName)
     {
 
-        this.fileName = fileName;
+       // this.fileName = fileName;
         try {
             reader = new RandomAccessFile(fileName,"r");
 
@@ -29,6 +26,19 @@ public class DataRecordReader {
             e.printStackTrace();
         }
     }
+
+    public DataRecordReader(File fileName)
+    {
+
+        // this.fileName = fileName;
+        try {
+            reader = new RandomAccessFile(fileName,"r");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public WALRecord read(long start)
     {

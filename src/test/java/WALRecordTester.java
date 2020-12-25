@@ -3,8 +3,11 @@ import blockchain.TransactionManager;
 import data.Transaction;
 import org.junit.Test;
 import util.MerkleTreeUtil;
+import wal.DataRecordReader;
 import wal.WALRecord;
 
+import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,6 +35,27 @@ public class WALRecordTester {
 
 
 
+    }
+
+    @Test
+    public void testReadingFromFile()
+    {
+        String dir = "/home/manoj/data/sbc/wal/bcn1/";
+        File file = new File(dir);
+
+        Arrays.stream(file.listFiles()).forEach(f->{
+            try {
+                DataRecordReader reader = new DataRecordReader(f);
+                while (reader.getCurrentPosition() <= f.length()) {
+                    WALRecord wal = reader.readNext();
+
+                    if (wal!=null)
+                        System.out.println(wal);
+                    else
+                        break;
+                }
+            } catch(Exception e) {} //TODO - figure out EOF
+        });
     }
 
 

@@ -62,10 +62,6 @@ public class WALRecord {
 
     public static WALRecord deserialize(RandomAccessFile reader)
     {
-        int keyStart=0;
-        int keyEnd=0;
-        int valStart=0;
-        int valEnd=0;
 
         StringBuilder builder = new StringBuilder();
 
@@ -76,53 +72,36 @@ public class WALRecord {
             try {
                 c = reader.readChar();
             } catch (IOException e) {
-                e.printStackTrace();
+                return null;
+                //e.printStackTrace();
             }
             builder.append(c);
 
 
-                if (c == EOF) {
-                    keyEnd = i - 1;
+                if (c == EOR || c==EOF) {
+
                     break;
                 }
 
-                i++;
         }
 
 
-            valStart = keyEnd + 2;
 
-        i=valStart;
-
-        while(true) {
-
-            char c = 0;
-            try {
-                c = reader.readChar();
-                builder.append(c);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            if (c == EOF) {
-                    valEnd = i - 1;
-                    break;
-                }
-
-                i++;
-        }
 
         String record = builder.toString();
 
-            String key = record.substring(keyStart, keyEnd + 1);
-            String value = record.substring(valStart, valEnd + 1);
-
-            return new WALRecord((Transaction)JSONUtil.fromJSON(value,Transaction.class));
+        return new WALRecord((Transaction)JSONUtil.fromJSON(record,Transaction.class));
 
 
 
 
     }
 
-
-
+    @Override
+    public String toString() {
+        return "WALRecord{" +
+                "transaction='" + transaction + '\'' +
+                ", transactionId='" + transactionId + '\'' +
+                '}';
+    }
 }
