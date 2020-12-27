@@ -105,7 +105,7 @@ public class TransactionBlockChainManager {
         static TransactionBlockChainManager INSTANCE = new TransactionBlockChainManager();
     }
 
-    PersistenceManager persistenceManager;
+     PersistenceManager persistenceManager;
 
 
     private TransactionBlockChainManager()

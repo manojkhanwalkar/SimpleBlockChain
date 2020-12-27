@@ -6,13 +6,16 @@ import com.codahale.metrics.annotation.Timed;
 import data.Transaction;
 import data.TransactionQuery;
 import data.TransactionResponse;
+import wal.WALIterator;
 import wal.WALManager;
+import wal.WALRecord;
 
 
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import java.util.Iterator;
 
 
 @Path("/")
@@ -29,6 +32,20 @@ public class BCResource {
 
         walManager.init();
 
+        //TODO - recover the last transaction committed to the blockchain .
+
+        var iterator = walManager.recovery(null);
+
+        printWALS(iterator);
+
+    }
+
+    private void printWALS(Iterator<WALRecord> iterator)
+    {
+        while(iterator.hasNext())
+        {
+            System.out.println(iterator.next());
+        }
     }
 
     String nodeName = "bcn1" ; //TODO - to take this from the configuration

@@ -4,10 +4,7 @@ import blockchain.TransactionManager;
 import data.Transaction;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class WALManager {
 
@@ -61,15 +58,26 @@ public class WALManager {
 
     }
 
-    public void recovery()
+    public Iterator<WALRecord> recovery(String transactionId)
     {
+        File file = new File(directory+nodeName);
+        if (transactionId==null) // everything needs to be recovered as the block chain does not have any transactions .
+        {
+            File[] files = file.listFiles();
+            WALIterator walIterator = new WALIterator(files);
+            return walIterator;
+        }
         /* get the last transaction id from the block chain persistence subsystem. from that determine which files are to be processed for recovery
         Return an iterator that returns all transaction id's after the one that block chain has passed in.
          */
+
+        return null; //TODO - yet to implement the logic .
+
     }
 
     public void submit(Transaction transaction)
     {
+
         WALRecord walRecord = new WALRecord(transaction);
         String str = WALRecord.serialize(walRecord);
 
