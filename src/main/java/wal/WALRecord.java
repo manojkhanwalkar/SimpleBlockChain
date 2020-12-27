@@ -75,13 +75,14 @@ public class WALRecord {
                 return null;
                 //e.printStackTrace();
             }
-            builder.append(c);
+
 
 
                 if (c == EOR || c==EOF) {
 
                     break;
                 }
+            builder.append(c);
 
         }
 
@@ -89,6 +90,9 @@ public class WALRecord {
 
 
         String record = builder.toString();
+
+        if (record.equals(""))
+            return null;
 
         return new WALRecord((Transaction)JSONUtil.fromJSON(record,Transaction.class));
 

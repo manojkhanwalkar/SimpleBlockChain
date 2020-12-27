@@ -61,17 +61,35 @@ public class WALManager {
     public Iterator<WALRecord> recovery(String transactionId)
     {
         File file = new File(directory+nodeName);
+        File[] files = file.listFiles();
+        if (files.length==0)
+        {
+            return null;
+        }
         if (transactionId==null) // everything needs to be recovered as the block chain does not have any transactions .
         {
-            File[] files = file.listFiles();
-            WALIterator walIterator = new WALIterator(files);
-            return walIterator;
+            return new WALIterator(files,null);
+
         }
+        // assume last two WAL files will have the last transaction that has been processed.
+
+
+        Arrays.sort(files,Comparator.comparing(File::lastModified));
+
+        int max = Math.min(2,files.length);
+        File[] latestFiles = new File[max];
+        for (int i=0;i<max;i++)
+        {
+            latestFiles[i] = files[files.length-max+i];
+
+        }
+
+        return new WALIterator(latestFiles,transactionId);
         /* get the last transaction id from the block chain persistence subsystem. from that determine which files are to be processed for recovery
         Return an iterator that returns all transaction id's after the one that block chain has passed in.
          */
 
-        return null; //TODO - yet to implement the logic .
+
 
     }
 

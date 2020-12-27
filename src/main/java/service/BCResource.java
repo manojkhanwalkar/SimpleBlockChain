@@ -34,9 +34,11 @@ public class BCResource {
 
         //TODO - recover the last transaction committed to the blockchain .
 
-        var iterator = walManager.recovery(null);
+        var iterator = walManager.recovery("bcn1-104645287801902");
 
-        printWALS(iterator);
+        // IF the Iterator is null , there ar no WAL files and hence nothing to recover.
+        if (iterator!=null)
+            printWALS(iterator);
 
     }
 

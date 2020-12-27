@@ -8,11 +8,26 @@ public class WALIterator implements Iterator<WALRecord> {
     final File[] files;
     DataRecordReader reader = null;
     int fileIndex=0;
-    public WALIterator(File[] files)
+    public WALIterator(File[] files, String transactionId)
     {
         this.files = files;
-        if (files.length!=0)
-          reader = new DataRecordReader(files[fileIndex++]);
+        position(transactionId);
+    }
+
+    private void position(String transactionId) {
+        if (transactionId == null)
+            reader = new DataRecordReader(files[fileIndex++]);
+        else
+        {
+            reader = new DataRecordReader(files[fileIndex++]);
+            while(hasNext())
+            {
+                WALRecord record = next();
+                if (record.transactionId.equals(transactionId))
+                    return;
+            }
+        }
+
     }
 
     WALRecord nextRecord =null;
