@@ -1,6 +1,5 @@
 # **Simple Block Chain**
 
-**Work In Progress**
 
 The code implements a simplified version of the BlockChain and is intended for usage in applications like recording changes for audit purposes. 
 The design pattern is independent of the nature of the data and assumes a generic transaction structure to store and query the data. 
