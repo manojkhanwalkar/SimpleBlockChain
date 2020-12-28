@@ -35,8 +35,6 @@ public class BCResource {
         String transactionId = transactionManager.getLastTransactionId();
 
         System.out.println("Last transaction in the block chain is " + transactionId);
-        if (transactionId!=null) {
-
             var iterator = walManager.recovery(transactionId);
 
             // IF the Iterator is null , there ar no WAL files and hence nothing to recover.
@@ -54,8 +52,6 @@ public class BCResource {
                 System.out.println("Recovered from WAL " + count);
 
             }
-
-        }
 
     }
 
@@ -98,7 +94,8 @@ public class BCResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Transaction verify(TransactionQuery request) {
 
-        return null;
+        return transactionManager.query(request.getTransactionId());
+
 
     }
 

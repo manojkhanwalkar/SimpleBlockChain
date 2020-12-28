@@ -111,6 +111,19 @@ public class TransactionBlockChainManager {
 
     }
 
+    public Transaction getTransactionFromId(String transactionId)
+    {
+
+        Block lastBlock =  persistenceManager.getLikelyBlock(transactionId);
+        if (lastBlock==null)
+            return null;
+        var list = lastBlock.transactions();
+
+        var last = list.get(list.size()-1);
+
+        return last;
+    }
+
 
     static class BCHolder
     {

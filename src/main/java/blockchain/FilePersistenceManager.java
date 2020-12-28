@@ -120,9 +120,69 @@ public class FilePersistenceManager  {
     }
 
 
+    private File findFile(File[] files, String transactionId)
+    {
+        //bcn1-114280296944612
+        long txnTime = Long.parseLong(transactionId.split("-")[1]);
+
+        File file = files[0];
+        long fileTime = Long.parseLong(file.getName().split(".")[0]);
+
+        if (txnTime<fileTime)
+            return null;
+
+        file = files[files.length-1];
+        if (txnTime>fileTime)
+            return null;
+
+        File fileToSearch =null;
+
+        for (int i=0;i<files.length;i++)
+        {
+            file = files[i];
+            fileTime = Long.parseLong(file.getName().split(".")[0]);
+            if (txnTime>fileTime)
+                fileToSearch = file;
+            else
+                break;
+
+        }
+        return fileToSearch;
+    }
+    public Block getLikelyBlock(String transactionId) {
+
+        try {
+            File dir = new File(persistenceDir);
+            File[] files = dir.listFiles();
+            if (files==null || files.length==0) {
+                return null;
+            }
+
+            Arrays.sort(files, Comparator.comparing(File::lastModified));
+
+            File file = findFile(files,transactionId);
+
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            String s = reader.readLine();
+            String lastBlockStr=null;
+            while (s != null) {
+                lastBlockStr = s;
+                s = reader.readLine();
+            }
+            EncryptedBlock encryptedBlock = (EncryptedBlock) JSONUtil.fromJSON(lastBlockStr, EncryptedBlock.class);
+            String str = CryptUtil.decrypt(encryptedBlock.getEncryptedContents(),encryptedBlock.getEncryptedKey(),privateKey);
+
+            System.out.println(str);
+
+            Block block = (Block) JSONUtil.fromJSON(str, Block.class);
+
+            return block;
 
 
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-
-
+        return null;
+    }
 }

@@ -13,6 +13,11 @@ public class TransactionManager {
         return TransactionBlockChainManager.getInstance().getLastTransactionId();
     }
 
+    public Transaction query(String transactionId) {
+        return TransactionBlockChainManager.getInstance().getTransactionFromId(transactionId);
+
+    }
+
     static class TMHolder
     {
         static TransactionManager INSTANCE = new TransactionManager();

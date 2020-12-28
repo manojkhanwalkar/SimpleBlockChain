@@ -21,6 +21,25 @@ public class Block {
   //  @JsonProperty
     MerkleTree tree;
 
+    String startTransactionId;
+    String endTransactionId;
+
+    public String getStartTransactionId() {
+        return startTransactionId;
+    }
+
+    public void setStartTransactionId(String startTransactionId) {
+        this.startTransactionId = startTransactionId;
+    }
+
+    public String getEndTransactionId() {
+        return endTransactionId;
+    }
+
+    public void setEndTransactionId(String endTransactionId) {
+        this.endTransactionId = endTransactionId;
+    }
+
     public String getRootHash() {
         return rootHash;
     }
@@ -61,6 +80,8 @@ public class Block {
 
         MerkleTreeUtil mtu = new MerkleTreeUtil();
         tree = mtu.build(transactions);
+        setStartTransactionId(transactions.get(0).getTransactionId());
+        setEndTransactionId(transactions.get(transactions.size()-1).getTransactionId());
 
     }
 
