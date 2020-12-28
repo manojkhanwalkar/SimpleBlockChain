@@ -43,7 +43,7 @@ public class MerkleTreeTester {
             t1.setTransactionId(UUID.randomUUID().toString());
             t1.setPublicKey("Public key");
             t1.setSignature("Signed transaction");
-            TransactionManager.getInstance().submit(t1,"bcn1");
+            TransactionManager.getInstance().submit(t1);
         }
 
         try {

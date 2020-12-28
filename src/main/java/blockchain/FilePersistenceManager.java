@@ -12,6 +12,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 public class FilePersistenceManager  {
@@ -44,7 +45,7 @@ public class FilePersistenceManager  {
     public void persist(List<Block> blocks) {
 
             try {
-                File file = new File(persistenceDir + System.currentTimeMillis() + ".data");
+                File file = new File(persistenceDir + System.nanoTime() + ".data");
                 BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 
                 // store one block per line .
@@ -77,54 +78,42 @@ public class FilePersistenceManager  {
 
         }
 
-        int numBlocks=0;
 
 
-    public BlockChain restore()
+    public Block getLastBlockWritten()
     {
 
-        BlockChain blockChain=null;
+
         try {
             File dir = new File(persistenceDir);
             File[] files = dir.listFiles();
-            Arrays.sort(files, LastModifiedFileComparator.LASTMODIFIED_COMPARATOR);
-
-
-            if (files.length==0) {
-
+            if (files==null || files.length==0) {
                 return null;
-
             }
 
-            blockChain = new BlockChain();
-            for (File file : files ) {
+            Arrays.sort(files, Comparator.comparing(File::lastModified).reversed());
+
+            File file = files[0];
 
                  BufferedReader reader = new BufferedReader(new FileReader(file));
                  String s = reader.readLine();
+                 String lastBlockStr=null;
                  while (s != null) {
-                     EncryptedBlock encryptedBlock = (EncryptedBlock) JSONUtil.fromJSON(s, EncryptedBlock.class);
-                     String str = CryptUtil.decrypt(encryptedBlock.getEncryptedContents(),encryptedBlock.getEncryptedKey(),privateKey);
-                     Block block = (Block) JSONUtil.fromJSON(str, Block.class);
-                     blockChain.restore(block);
+                     lastBlockStr = s;
                      s = reader.readLine();
-                     numBlocks++;
                  }
+            EncryptedBlock encryptedBlock = (EncryptedBlock) JSONUtil.fromJSON(lastBlockStr, EncryptedBlock.class);
+            String str = CryptUtil.decrypt(encryptedBlock.getEncryptedContents(),encryptedBlock.getEncryptedKey(),privateKey);
+            Block block = (Block) JSONUtil.fromJSON(str, Block.class);
 
-             }
+            return block;
 
-            System.out.println("Number of blocks read are " + numBlocks);
-
-
-
-            return blockChain;
 
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return blockChain;
-
-
+        return null;
     }
 
 

@@ -5,6 +5,7 @@ import data.Transaction;
 import blockchain.merkletree.MerkleTree;
 import util.MerkleTreeUtil;
 
+import java.util.Comparator;
 import java.util.List;
 
 public class Block {
@@ -20,7 +21,14 @@ public class Block {
     MerkleTree tree;
 
 
+    public List<Transaction> getTransactions()
+    {
+        var transactions = MerkleTreeUtil.getTransactions(tree);
+        transactions.sort(Comparator.comparing(Transaction::getTransactionId));
 
+        return transactions;
+
+    }
 
     public Block(List<Transaction> transactions)
     {

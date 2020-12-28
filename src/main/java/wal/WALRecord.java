@@ -28,6 +28,9 @@ public class WALRecord {
         this.transactionId=transaction.getTransactionId();
     }
 
+    public String getTransaction() {
+        return transaction;
+    }
 
     public static String serialize(WALRecord record)
     {

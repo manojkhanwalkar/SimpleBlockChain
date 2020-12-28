@@ -1,6 +1,8 @@
 package blockchain.merkletree;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 @JsonIdentityInfo(
@@ -18,14 +20,14 @@ public class HashNode implements Node {
         this.id = id;
     }
 
-  //  @JsonManagedReference
+    @JsonManagedReference
     HashNode parent;
 String hash;
 
-//@JsonBackReference
+@JsonBackReference
 Node left ;
 
-//@JsonBackReference
+@JsonBackReference
 Node right;
 
 
@@ -69,7 +71,7 @@ Node right;
         this.parent = (HashNode)parent;
     }
 
-    @Override
+  /*  @Override
     public String toString() {
         return "HashNode{" +
                 "id=" + id +
@@ -77,5 +79,5 @@ Node right;
                 ", left=" + left +
                 ", right=" + right +
                 '}';
-    }
+    }*/
 }

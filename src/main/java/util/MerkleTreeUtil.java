@@ -370,55 +370,39 @@ public class MerkleTreeUtil {
     }
 
 
-    // transaction List
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-
-    public static Set<AttributeNode> getAttributes(MerkleTree tree)
+    public static List<Transaction> getTransactions(MerkleTree tree)
     {
-        Set<AttributeNode> fields = new HashSet<>();
+        List<Transaction> transactions  = new ArrayList<>();
 
-        traverseTreeAndCollectFields(tree.getRoot(),fields);
-        return fields;
+        traverseTreeAndCollectFields(tree.getRoot(),transactions);
+        return transactions;
 
     }
-*/
-/*
-    private static void traverseTreeAndCollectFields(Node node , Set<AttributeNode> fields)
+
+
+    private static void traverseTreeAndCollectFields(Node node , List<Transaction> transactions)
     {
 
-        if (node instanceof AttributeNode)
+        if (node instanceof LeafHashNode)
         {
-            fields.add((AttributeNode)node);
+            transactions.add(((LeafHashNode) node).getTransaction());
         }
 
         if (node.getLeft()!=null)
         {
-            traverseTreeAndCollectFields(node.getLeft(),fields);
+            traverseTreeAndCollectFields(node.getLeft(),transactions);
         }
         if (node.getRight()!=null)
         {
-            traverseTreeAndCollectFields(node.getRight(),fields);
+            traverseTreeAndCollectFields(node.getRight(),transactions);
         }
 
 
 
     }
 
-*/
+
 
 
 

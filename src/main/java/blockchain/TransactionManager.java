@@ -9,6 +9,10 @@ import java.util.List;
 
 public class TransactionManager {
 
+    public String getLastTransactionId() {
+        return TransactionBlockChainManager.getInstance().getLastTransactionId();
+    }
+
     static class TMHolder
     {
         static TransactionManager INSTANCE = new TransactionManager();
@@ -29,7 +33,7 @@ public class TransactionManager {
 
 
     int count = 0;
-    public synchronized void submit(Transaction transaction, String nodeName)
+    public synchronized void submit(Transaction transaction)
     {
 
         transactionList.add(transaction);

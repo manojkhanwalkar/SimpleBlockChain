@@ -18,40 +18,43 @@ public class TransactionBlockChainManager {
 
    // BlockChain blockChain ;
 
-    String persistenceDir;
+    final static String persistenceDir = "/home/manoj/data/sbc/bc/bcn1/";
 
     public String getPersistenceDir() {
         return persistenceDir;
     }
 
-    public void setPersistenceDir(String persistenceDir) {
+  /*  public void setPersistenceDir(String persistenceDir) {
         this.persistenceDir = persistenceDir;
-        // TODO - fix this
-        //persistenceManager = new FilePersistenceManager(persistenceDir);
+        persistenceManager = new FilePersistenceManager(persistenceDir);
 
-    }
-
+    }*/
 
 
-    ExecutorService service = Executors.newCachedThreadPool();
+
 
 //TODO - restore feature needs to be added
 
     @JsonProperty
     List<Block> blocks = new ArrayList<>();
 
+    //TODO - fix the first prev hash to the last persisted block
+    String prevHash="0";
     protected synchronized void add(Block block)
     {
-        String hash = blocks.get(blocks.size()-1).rootHash;
-        block.prevHash = hash;
+        block.prevHash = prevHash;
         block.rootHash = getSHA2HexValue(block.prevHash+block.tree.getRoot().getHash());
         blocks.add(block);
 
-        if (blocks.size()==MAXBLOCKS)
+        prevHash = block.rootHash;
+
+        if (blocks.size()==MAXBLOCKS) {
             persist(blocks);
+            blocks.clear();
+        }
 
 
-        blocks.clear();
+
     }
 
 
@@ -95,11 +98,16 @@ public class TransactionBlockChainManager {
       //  service.submit(new TransactionToBlocksProcessor(transactions));
     }
 
+    public String getLastTransactionId() {
 
+        Block lastBlock =  persistenceManager.getLastBlockWritten();
+        var list = lastBlock.getTransactions();
 
+        var last = list.get(list.size()-1);
 
+        return last.getTransactionId();
 
-
+    }
 
 
     static class BCHolder
@@ -112,6 +120,8 @@ public class TransactionBlockChainManager {
 
     private TransactionBlockChainManager()
     {
+        persistenceManager = new FilePersistenceManager(persistenceDir);
+
     }
 
     public static TransactionBlockChainManager getInstance()

@@ -6,6 +6,7 @@ import com.codahale.metrics.annotation.Timed;
 import data.Transaction;
 import data.TransactionQuery;
 import data.TransactionResponse;
+import util.JSONUtil;
 import wal.WALIterator;
 import wal.WALManager;
 import wal.WALRecord;
@@ -34,11 +35,26 @@ public class BCResource {
 
         //TODO - recover the last transaction committed to the blockchain .
 
-        var iterator = walManager.recovery("bcn1-1046452975379389");
+        String transactionId = transactionManager.getLastTransactionId();
 
-        // IF the Iterator is null , there ar no WAL files and hence nothing to recover.
-        if (iterator!=null)
-            printWALS(iterator);
+        System.out.println("Last transaction in the block chain is " + transactionId);
+        if (transactionId!=null) {
+
+            var iterator = walManager.recovery("bcn1-1046452975379389");
+
+            // IF the Iterator is null , there ar no WAL files and hence nothing to recover.
+            if (iterator != null) {
+                //printWALS(iterator);
+                while(iterator.hasNext())
+                {
+                    var record = iterator.next().getTransaction();
+
+                    transactionManager.submit((Transaction)JSONUtil.fromJSON(record,Transaction.class));
+                }
+
+            }
+
+        }
 
     }
 
@@ -67,7 +83,7 @@ public class BCResource {
         request.setTransactionId(tranId);
 
         walManager.submit(request);
-        transactionManager.submit(request,nodeName);
+        transactionManager.submit(request);
 
         var response = new TransactionResponse();
         response.setTransactionId(tranId);
