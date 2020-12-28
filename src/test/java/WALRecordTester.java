@@ -19,8 +19,7 @@ public class WALRecordTester {
         Transaction t1 = new Transaction();
         t1.setContents("Simple transacrtion");
         t1.setTransactionId(UUID.randomUUID().toString());
-        t1.setPublicKey("Public key");
-        t1.setSignature("Signed transaction");
+
 
 
         WALRecord record = new WALRecord(t1);

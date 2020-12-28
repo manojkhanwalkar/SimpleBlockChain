@@ -120,17 +120,16 @@ public class FilePersistenceManager  {
 
     private File findFile(File[] files, String transactionId)
     {
-        //bcn1-114280296944612
-        long txnTime = Long.parseLong(transactionId.split("-")[1]);
+        long txnTime = getTimeOfTransaction(transactionId);
 
         File file = files[0];
-        long fileTime = Long.parseLong(file.getName().split("-")[1]);
+        long fileTime = getTimeOfTransaction(file.getName());
 
         if (txnTime<fileTime)
             return null;
 
         file = files[files.length-1];
-        fileTime = Long.parseLong(file.getName().split("-")[1]);
+        fileTime = getTimeOfTransaction(file.getName());
         if (txnTime>fileTime)
             return null;
 
@@ -139,7 +138,7 @@ public class FilePersistenceManager  {
         for (int i=0;i<files.length;i++)
         {
             file = files[i];
-            fileTime = Long.parseLong(file.getName().split("-")[1]);
+            fileTime = getTimeOfTransaction(file.getName()) ;
             if (txnTime>fileTime)
                 fileToSearch = file;
             else
@@ -182,12 +181,17 @@ public class FilePersistenceManager  {
         return null;
     }
 
+    private long getTimeOfTransaction(String transactionId)
+    {
+        return Long.parseLong(transactionId.split("-")[1]);
+    }
+
     private boolean transactionInBlock(Block block, String transactionId) {
 
-        long txnTime = Long.parseLong(transactionId.split("-")[1]);
+        long txnTime = getTimeOfTransaction(transactionId);
 
-        long txnStartInBlock = Long.parseLong(block.startTransactionId.split("-")[1]);
-        long txnEndInBlock = Long.parseLong(block.endTransactionId.split("-")[1]);
+        long txnStartInBlock = getTimeOfTransaction(block.startTransactionId);
+        long txnEndInBlock = getTimeOfTransaction(block.endTransactionId);
 
         if (txnStartInBlock<= txnTime && txnEndInBlock >= txnTime)
             return true;

@@ -13,8 +13,7 @@ public class SubmitTester {
         for (int i=0;i<1001;i++)
         {
             Transaction transaction = new Transaction();
-            transaction.setSignature("Signature");
-            transaction.setPublicKey("Pub Key");
+
             transaction.setContents("Some tran " + i);
 
             var response = connection.sendSimple(JSONUtil.toJSON(transaction),"submit");

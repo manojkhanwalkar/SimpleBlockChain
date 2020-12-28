@@ -2,21 +2,12 @@ package data;
 
 public class Transaction {
 
-    String signature;
+
 
     String transactionId;
 
     String contents;
 
-    String publicKey;
-
-    public String getSignature() {
-        return signature;
-    }
-
-    public void setSignature(String signature) {
-        this.signature = signature;
-    }
 
     public String getTransactionId() {
         return transactionId;
@@ -34,21 +25,11 @@ public class Transaction {
         this.contents = contents;
     }
 
-    public String getPublicKey() {
-        return publicKey;
-    }
-
-    public void setPublicKey(String publicKey) {
-        this.publicKey = publicKey;
-    }
-
     @Override
     public String toString() {
         return "Transaction{" +
-                "signature='" + signature + '\'' +
-                ", transactionId='" + transactionId + '\'' +
+                "transactionId='" + transactionId + '\'' +
                 ", contents='" + contents + '\'' +
-                ", publicKey='" + publicKey + '\'' +
                 '}';
     }
 }
