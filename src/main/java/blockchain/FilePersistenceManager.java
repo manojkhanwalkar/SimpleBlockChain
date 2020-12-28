@@ -37,15 +37,13 @@ public class FilePersistenceManager  {
     }
 
 
-    // new file everytime we persist = bc + timestamp
-
-    // restore one file at a time , sorted by time .
-
 
     public void persist(List<Block> blocks) {
 
             try {
-                File file = new File(persistenceDir + System.nanoTime() + ".data");
+                String transactionId = blocks.get(0).startTransactionId;
+                long time = Long.parseLong(transactionId.split("-")[1]);
+                File file = new File(persistenceDir + "-" + time);
                 BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 
                 // store one block per line .
@@ -126,12 +124,13 @@ public class FilePersistenceManager  {
         long txnTime = Long.parseLong(transactionId.split("-")[1]);
 
         File file = files[0];
-        long fileTime = Long.parseLong(file.getName().split(".")[0]);
+        long fileTime = Long.parseLong(file.getName().split("-")[1]);
 
         if (txnTime<fileTime)
             return null;
 
         file = files[files.length-1];
+        fileTime = Long.parseLong(file.getName().split("-")[1]);
         if (txnTime>fileTime)
             return null;
 
@@ -140,7 +139,7 @@ public class FilePersistenceManager  {
         for (int i=0;i<files.length;i++)
         {
             file = files[i];
-            fileTime = Long.parseLong(file.getName().split(".")[0]);
+            fileTime = Long.parseLong(file.getName().split("-")[1]);
             if (txnTime>fileTime)
                 fileToSearch = file;
             else
@@ -161,22 +160,19 @@ public class FilePersistenceManager  {
             Arrays.sort(files, Comparator.comparing(File::lastModified));
 
             File file = findFile(files,transactionId);
+            if (file==null)
+                return null;
 
             BufferedReader reader = new BufferedReader(new FileReader(file));
             String s = reader.readLine();
-            String lastBlockStr=null;
             while (s != null) {
-                lastBlockStr = s;
+                EncryptedBlock encryptedBlock = (EncryptedBlock) JSONUtil.fromJSON(s, EncryptedBlock.class);
+                String str = CryptUtil.decrypt(encryptedBlock.getEncryptedContents(),encryptedBlock.getEncryptedKey(),privateKey);
+                Block block = (Block) JSONUtil.fromJSON(str, Block.class);
+                if (transactionInBlock(block,transactionId))
+                    return block;
                 s = reader.readLine();
             }
-            EncryptedBlock encryptedBlock = (EncryptedBlock) JSONUtil.fromJSON(lastBlockStr, EncryptedBlock.class);
-            String str = CryptUtil.decrypt(encryptedBlock.getEncryptedContents(),encryptedBlock.getEncryptedKey(),privateKey);
-
-            System.out.println(str);
-
-            Block block = (Block) JSONUtil.fromJSON(str, Block.class);
-
-            return block;
 
 
         } catch (IOException e) {
@@ -184,5 +180,19 @@ public class FilePersistenceManager  {
         }
 
         return null;
+    }
+
+    private boolean transactionInBlock(Block block, String transactionId) {
+
+        long txnTime = Long.parseLong(transactionId.split("-")[1]);
+
+        long txnStartInBlock = Long.parseLong(block.startTransactionId.split("-")[1]);
+        long txnEndInBlock = Long.parseLong(block.endTransactionId.split("-")[1]);
+
+        if (txnStartInBlock<= txnTime && txnEndInBlock >= txnTime)
+            return true;
+        else
+            return false;
+
     }
 }

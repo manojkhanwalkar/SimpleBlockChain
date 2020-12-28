@@ -119,9 +119,22 @@ public class TransactionBlockChainManager {
             return null;
         var list = lastBlock.transactions();
 
-        var last = list.get(list.size()-1);
+
+
+        var last = find(transactionId, list);
 
         return last;
+    }
+
+    private Transaction  find(String transactionId, List<Transaction> list) {
+
+        for (Transaction transaction : list)
+        {
+            if (transaction.getTransactionId().equals(transactionId))
+                return transaction;
+        }
+
+        return null;
     }
 
 

@@ -1,4 +1,5 @@
 import data.Transaction;
+import data.TransactionQuery;
 import org.junit.Test;
 import util.Connection;
 import util.JSONUtil;
@@ -20,6 +21,18 @@ public class SubmitTester {
             System.out.println(response);
         }
 
-        System.out.println(Long.MAX_VALUE);
+
+    }
+
+    @Test
+    public void query()
+    {
+        Connection connection = new Connection("https://localhost:8180/");
+        TransactionQuery transactionQuery = new TransactionQuery();
+        transactionQuery.setTransactionId("bcn1-3757071982160");
+
+            var response = connection.sendSimple(JSONUtil.toJSON(transactionQuery),"query");
+            System.out.println(response);
+
     }
 }
