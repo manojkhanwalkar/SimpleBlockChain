@@ -3,16 +3,20 @@ package blockchain;
 
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import data.Transaction;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static util.MerkleTreeUtil.getSHA2HexValue;
+
 public class TransactionBlockChainManager {
 
 
-    BlockChain blockChain ;
+   // BlockChain blockChain ;
 
     String persistenceDir;
 
@@ -33,69 +37,64 @@ public class TransactionBlockChainManager {
 
 //TODO - restore feature needs to be added
 
+    @JsonProperty
+    List<Block> blocks = new ArrayList<>();
+
     protected synchronized void add(Block block)
     {
-        blockChain.add(block);
+        String hash = blocks.get(blocks.size()-1).rootHash;
+        block.prevHash = hash;
+        block.rootHash = getSHA2HexValue(block.prevHash+block.tree.getRoot().getHash());
+        blocks.add(block);
+
         //TODO - fix this
-       // persist(block);
+        // persist(block);
     }
+
+
 
 
     public synchronized void persist(Block block)
     {
-        System.out.println(blockChain.getBlocks().size());
         persistenceManager.persist(block);
     }
 
     public synchronized void bootstrap()
     {
-        blockChain= new BlockChain();
-        blockChain.bootstrap();
         //TODO - fix this
+        //blockChain= new BlockChain();
+        //blockChain.bootstrap();
+
         //persist(blockChain.getBlocks().get(0));
     }
 
     public synchronized void restore()
     {
-        blockChain = persistenceManager.restore();
+        //TODO - fix this
+       /* blockChain = persistenceManager.restore();
         if (blockChain==null)
         {
             bootstrap();
         }
-        System.out.println(blockChain.getBlocks().size());
+        System.out.println(blockChain.getBlocks().size());*/
     }
 
 
-
+    static final int MAXBLOCKS = 10;
 
     public void submit(List<Transaction> transactions)
     {
+        // once max blocks are created , then persist to a new file .
 
-        service.submit(new TransactionToBlocksProcessor(transactions));
+        Block block = new Block(transactions);
+        add(block);
+
+      //  service.submit(new TransactionToBlocksProcessor(transactions));
     }
 
 
 
 
-    class TransactionToBlocksProcessor implements Runnable
-    {
-        List<Transaction> transactions;
-      //  BlockChainManager manager;
-        public TransactionToBlocksProcessor(List<Transaction> transactions)
-        {
-            this.transactions = transactions;
-         //   this.manager = manager;
-        }
-
-        public void run()
-        {
-            Block block = new Block(transactions);
-
-            add(block);
-
-
-        }
-    }
 
 
 

@@ -25,6 +25,7 @@ public class BlockChain {
 
     public void bootstrap()
     {
+        //TODO - get the last persisted transaction
         Block genesis = Block.getGenesisBlock();
         blocks.add(genesis);
 
