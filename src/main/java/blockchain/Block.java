@@ -1,5 +1,6 @@
 package blockchain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import data.Transaction;
 import blockchain.merkletree.MerkleTree;
@@ -11,17 +12,41 @@ import java.util.List;
 public class Block {
 
 
-    @JsonProperty
+  //  @JsonProperty
     String rootHash;
 
-    @JsonProperty
+  //  @JsonProperty
     String prevHash;
 
-    @JsonProperty
+  //  @JsonProperty
     MerkleTree tree;
 
+    public String getRootHash() {
+        return rootHash;
+    }
 
-    public List<Transaction> getTransactions()
+    public void setRootHash(String rootHash) {
+        this.rootHash = rootHash;
+    }
+
+    public String getPrevHash() {
+        return prevHash;
+    }
+
+    public void setPrevHash(String prevHash) {
+        this.prevHash = prevHash;
+    }
+
+    public MerkleTree getTree() {
+        return tree;
+    }
+
+    public void setTree(MerkleTree tree) {
+        this.tree = tree;
+    }
+
+    @JsonIgnore
+    public List<Transaction> transactions()
     {
         var transactions = MerkleTreeUtil.getTransactions(tree);
         transactions.sort(Comparator.comparing(Transaction::getTransactionId));
@@ -30,6 +55,7 @@ public class Block {
 
     }
 
+    @JsonIgnore
     public Block(List<Transaction> transactions)
     {
 

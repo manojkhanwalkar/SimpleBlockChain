@@ -104,6 +104,9 @@ public class FilePersistenceManager  {
                  }
             EncryptedBlock encryptedBlock = (EncryptedBlock) JSONUtil.fromJSON(lastBlockStr, EncryptedBlock.class);
             String str = CryptUtil.decrypt(encryptedBlock.getEncryptedContents(),encryptedBlock.getEncryptedKey(),privateKey);
+
+            System.out.println(str);
+
             Block block = (Block) JSONUtil.fromJSON(str, Block.class);
 
             return block;

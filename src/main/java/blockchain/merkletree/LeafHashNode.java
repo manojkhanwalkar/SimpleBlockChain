@@ -27,10 +27,10 @@ public class LeafHashNode implements Node {
 
     Transaction transaction;
 
-    public void setParent(HashNode parent) {
+    /*public void setParent(HashNode parent) {
         this.parent = parent;
     }
-
+*/
     public Transaction getTransaction() {
         return transaction;
     }

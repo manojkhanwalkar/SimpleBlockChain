@@ -20,14 +20,14 @@ public class HashNode implements Node {
         this.id = id;
     }
 
-    @JsonManagedReference
+
     HashNode parent;
 String hash;
 
-@JsonBackReference
+
 Node left ;
 
-@JsonBackReference
+
 Node right;
 
 

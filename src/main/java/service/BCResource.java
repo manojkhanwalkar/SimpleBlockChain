@@ -32,25 +32,26 @@ public class BCResource {
         this.defaultName = defaultName;
 
         walManager.init();
-
-        //TODO - recover the last transaction committed to the blockchain .
-
         String transactionId = transactionManager.getLastTransactionId();
 
         System.out.println("Last transaction in the block chain is " + transactionId);
         if (transactionId!=null) {
 
-            var iterator = walManager.recovery("bcn1-1046452975379389");
+            var iterator = walManager.recovery(transactionId);
 
             // IF the Iterator is null , there ar no WAL files and hence nothing to recover.
             if (iterator != null) {
-                //printWALS(iterator);
+                System.out.println("Recovering from the WAL , transactions not yet committed to the block chain");
+                int count =0;
                 while(iterator.hasNext())
                 {
+                    count++;
                     var record = iterator.next().getTransaction();
 
                     transactionManager.submit((Transaction)JSONUtil.fromJSON(record,Transaction.class));
                 }
+
+                System.out.println("Recovered from WAL " + count);
 
             }
 

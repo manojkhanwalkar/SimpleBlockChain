@@ -101,7 +101,9 @@ public class TransactionBlockChainManager {
     public String getLastTransactionId() {
 
         Block lastBlock =  persistenceManager.getLastBlockWritten();
-        var list = lastBlock.getTransactions();
+        if (lastBlock==null)
+            return null;
+        var list = lastBlock.transactions();
 
         var last = list.get(list.size()-1);
 
