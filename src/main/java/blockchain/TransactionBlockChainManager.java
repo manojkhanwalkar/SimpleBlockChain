@@ -47,16 +47,19 @@ public class TransactionBlockChainManager {
         block.rootHash = getSHA2HexValue(block.prevHash+block.tree.getRoot().getHash());
         blocks.add(block);
 
-        //TODO - fix this
-        // persist(block);
+        if (blocks.size()==MAXBLOCKS)
+            persist(blocks);
+
+
+        blocks.clear();
     }
 
 
 
 
-    public synchronized void persist(Block block)
+    public synchronized void persist(List<Block> blocks)
     {
-        persistenceManager.persist(block);
+        persistenceManager.persist(blocks);
     }
 
     public synchronized void bootstrap()
@@ -104,7 +107,7 @@ public class TransactionBlockChainManager {
         static TransactionBlockChainManager INSTANCE = new TransactionBlockChainManager();
     }
 
-     PersistenceManager persistenceManager;
+     FilePersistenceManager persistenceManager;
 
 
     private TransactionBlockChainManager()

@@ -1,6 +1,6 @@
 package blockchain;
 
-/*
+
 import org.apache.commons.io.comparator.LastModifiedFileComparator;
 import util.CertUtil;
 import util.CryptUtil;
@@ -11,12 +11,13 @@ import java.io.*;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;*/
+import java.util.Arrays;
+import java.util.List;
 
-public class FilePersistenceManager implements PersistenceManager {
-/*
-    String certFile = "/home/manoj/IdeaProjects/KryptIdEcoSysDemo/src/main/resources/blockrsacertificate.pem";
-    String privateFile = "/home/manoj/IdeaProjects/KryptIdEcoSysDemo/src/main/resources/blockrsakey.der";
+public class FilePersistenceManager  {
+
+    String certFile = "/home/manoj/IdeaProjects/SimpleBlockChain/src/main/resources/blockrsacertificate.pem";
+    String privateFile = "/home/manoj/IdeaProjects/SimpleBlockChain/src/main/resources/blockrsakey.der";
 
 
 
@@ -39,15 +40,15 @@ public class FilePersistenceManager implements PersistenceManager {
 
     // restore one file at a time , sorted by time .
 
-        @Override
-    public void persist(Block block) {
+
+    public void persist(List<Block> blocks) {
 
             try {
                 File file = new File(persistenceDir + System.currentTimeMillis() + ".data");
                 BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 
                 // store one block per line .
-
+                for (Block block : blocks)
                 {
 
                     String str = JSONUtil.toJSON(block);
@@ -78,7 +79,7 @@ public class FilePersistenceManager implements PersistenceManager {
 
         int numBlocks=0;
 
-    @Override
+
     public BlockChain restore()
     {
 
@@ -129,7 +130,7 @@ public class FilePersistenceManager implements PersistenceManager {
 
 
 
-*/
+
 
 
 }
