@@ -8,8 +8,7 @@ import data.Transaction;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 import static util.MerkleTreeUtil.getSHA2HexValue;
 
@@ -29,6 +28,7 @@ public class TransactionBlockChainManager {
     List<Block> blocks = new ArrayList<>();
 
     String prevHash="0";
+    Future<Void> persistComplete = null;
     protected synchronized void add(Block block)
     {
         block.prevHash = prevHash;
@@ -38,8 +38,18 @@ public class TransactionBlockChainManager {
         prevHash = block.rootHash;
 
         if (blocks.size()==MAXBLOCKS) {
-            persist(blocks);
-            blocks.clear();
+            var blocksToWrite = blocks;
+            if (persistComplete!=null) {
+                try {
+                    persistComplete.get();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
+            }
+            persistComplete = CompletableFuture.runAsync(()-> persist(blocksToWrite));
+            blocks = new ArrayList<>();
         }
 
 
