@@ -56,6 +56,8 @@ public class FilePersistenceManager  {
                     EncryptedBlock encryptedBlock = new EncryptedBlock();
                     encryptedBlock.setEncryptedContents(tuple.message);
                     encryptedBlock.setEncryptedKey(tuple.key);
+                    encryptedBlock.setEndTransactionId(block.getEndTransactionId());
+                    encryptedBlock.setStartTransactionId(block.getStartTransactionId());
 
                     str = JSONUtil.toJSON(encryptedBlock);
 
@@ -166,10 +168,12 @@ public class FilePersistenceManager  {
             String s = reader.readLine();
             while (s != null) {
                 EncryptedBlock encryptedBlock = (EncryptedBlock) JSONUtil.fromJSON(s, EncryptedBlock.class);
-                String str = CryptUtil.decrypt(encryptedBlock.getEncryptedContents(),encryptedBlock.getEncryptedKey(),privateKey);
-                Block block = (Block) JSONUtil.fromJSON(str, Block.class);
-                if (transactionInBlock(block,transactionId))
+
+                if (transactionInBlock(encryptedBlock,transactionId)) {
+                    String str = CryptUtil.decrypt(encryptedBlock.getEncryptedContents(),encryptedBlock.getEncryptedKey(),privateKey);
+                    Block block = (Block) JSONUtil.fromJSON(str, Block.class);
                     return block;
+                }
                 s = reader.readLine();
             }
 
@@ -186,7 +190,7 @@ public class FilePersistenceManager  {
         return Long.parseLong(transactionId.split("-")[1]);
     }
 
-    private boolean transactionInBlock(Block block, String transactionId) {
+    private boolean transactionInBlock(EncryptedBlock block, String transactionId) {
 
         long txnTime = getTimeOfTransaction(transactionId);
 

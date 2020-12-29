@@ -21,7 +21,9 @@ public class Block {
   //  @JsonProperty
     MerkleTree tree;
 
+    @JsonIgnore
     String startTransactionId;
+    @JsonIgnore
     String endTransactionId;
 
     public String getStartTransactionId() {
