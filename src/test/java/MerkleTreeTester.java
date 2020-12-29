@@ -33,7 +33,7 @@ public class MerkleTreeTester {
     @Test
     public void createBlock()
     {
-        TransactionBlockChainManager.getInstance().bootstrap();
+
         for (int i=0;i< TransactionManager.MAX+1;i++) {
             Transaction t1 = new Transaction();
             t1.setContents("Simple transacrtion");

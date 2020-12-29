@@ -28,7 +28,7 @@ public class SubmitTester {
     {
         Connection connection = new Connection("https://localhost:8180/");
         TransactionQuery transactionQuery = new TransactionQuery();
-        transactionQuery.setTransactionId("bcn1-3757071982160");
+        transactionQuery.setTransactionId("bcn1-25334432235923");
 
             var response = connection.sendSimple(JSONUtil.toJSON(transactionQuery),"query");
             System.out.println(response);
