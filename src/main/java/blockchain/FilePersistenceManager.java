@@ -137,7 +137,33 @@ public class FilePersistenceManager  {
 
         File fileToSearch =null;
 
-        for (int i=0;i<files.length;i++)
+        // the transaction has to be in one of the files and the files are sorted , so use a binary search to locate the file.
+        int min =0; int max = files.length-1; int mid = (max-min)/2;
+        while(min<=max)
+        {
+            file = files[mid];
+            fileTime = getTimeOfTransaction(file.getName()) ;
+            if (txnTime<fileTime)
+                max = mid;
+            else // (txnTime>=fileTime)
+            {
+                if (mid==max || getTimeOfTransaction(files[mid+1].getName())>txnTime)
+                {
+                    fileToSearch= file;
+                    break;
+                }
+
+                min = mid;
+            }
+
+            mid = min + (max-min)/2;
+
+
+        }
+
+        return fileToSearch;
+
+  /*      for (int i=0;i<files.length;i++)
         {
             file = files[i];
             fileTime = getTimeOfTransaction(file.getName()) ;
@@ -147,7 +173,7 @@ public class FilePersistenceManager  {
                 break;
 
         }
-        return fileToSearch;
+        return fileToSearch;*/
     }
     public Block getLikelyBlock(String transactionId) {
 
