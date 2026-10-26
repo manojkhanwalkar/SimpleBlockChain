@@ -1,13 +1,14 @@
 package blockchain;
 
 
-import org.apache.commons.io.comparator.LastModifiedFileComparator;
 import util.CertUtil;
 import util.CryptUtil;
 import util.JSONUtil;
 import util.SymKeyStringTuple;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
@@ -17,10 +18,13 @@ import java.util.List;
 
 public class FilePersistenceManager  {
 
-    String certFile = "/home/manoj/IdeaProjects/SimpleBlockChain/src/main/resources/blockrsacertificate.pem";
-    String privateFile = "/home/manoj/IdeaProjects/SimpleBlockChain/src/main/resources/blockrsakey.der";
+    /** Environment variable (or system property) naming the PEM certificate whose RSA public key encrypts blocks at rest. */
+    public static final String CERT_FILE_SETTING = "BC_BLOCK_CERT_FILE";
+    /** Environment variable (or system property) naming the PKCS#8 DER RSA private key that decrypts blocks at rest. */
+    public static final String PRIVATE_KEY_FILE_SETTING = "BC_BLOCK_KEY_FILE";
 
-
+    /** Format version written by this code: AES-256-GCM content encryption, RSA-OAEP(SHA-256) key wrap. */
+    static final int ENCRYPTION_VERSION = 2;
 
     String persistenceDir ;
     PublicKey publicKey;
@@ -31,20 +35,39 @@ public class FilePersistenceManager  {
     public FilePersistenceManager(String persistenceDir)
     {
         this.persistenceDir = persistenceDir;
+        String certFile = requiredSetting(CERT_FILE_SETTING);
+        String privateFile = requiredSetting(PRIVATE_KEY_FILE_SETTING);
         publicKey =  CryptUtil.getPublicKeyFromCertFile(certFile,"RSA");
         certificate = CertUtil.getCertificate(certFile);
         privateKey =  CryptUtil.getPrivateKeyDerFromFile(privateFile,"RSA");
+        if (publicKey == null || privateKey == null) {
+            throw new IllegalStateException("Could not load the block encryption key pair from "
+                    + CERT_FILE_SETTING + " / " + PRIVATE_KEY_FILE_SETTING);
+        }
     }
 
+    private static String requiredSetting(String name)
+    {
+        String value = System.getenv(name);
+        if (value == null || value.isBlank())
+            value = System.getProperty(name);
+        if (value == null || value.isBlank())
+            throw new IllegalStateException(name + " must be set (environment variable or system property)");
+        return value;
+    }
+
+    private static byte[] associatedData(String startTransactionId, String endTransactionId)
+    {
+        return (startTransactionId + "|" + endTransactionId).getBytes(StandardCharsets.UTF_8);
+    }
 
 
     public void persist(List<Block> blocks) {
 
-            try {
-                String transactionId = blocks.get(0).startTransactionId;
-                long time = Long.parseLong(transactionId.split("-")[1]);
-                File file = new File(persistenceDir + "-" + time);
-                BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+            String transactionId = blocks.get(0).startTransactionId;
+            long time = Long.parseLong(transactionId.split("-")[1]);
+            File file = new File(persistenceDir + "-" + time);
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
 
                 // store one block per line .
                 for (Block block : blocks)
@@ -52,8 +75,16 @@ public class FilePersistenceManager  {
 
                     String str = JSONUtil.toJSON(block);
 
-                    SymKeyStringTuple tuple = CryptUtil.encrypt(str,publicKey);
+                    SymKeyStringTuple tuple;
+                    try {
+                        tuple = CryptUtil.encryptAuthenticated(str, publicKey,
+                                associatedData(block.getStartTransactionId(), block.getEndTransactionId()));
+                    } catch (GeneralSecurityException e) {
+                        // never fall back to writing the block unencrypted
+                        throw new IllegalStateException("Block encryption failed", e);
+                    }
                     EncryptedBlock encryptedBlock = new EncryptedBlock();
+                    encryptedBlock.setVersion(ENCRYPTION_VERSION);
                     encryptedBlock.setEncryptedContents(tuple.message);
                     encryptedBlock.setEncryptedKey(tuple.key);
                     encryptedBlock.setEndTransactionId(block.getEndTransactionId());
@@ -61,16 +92,11 @@ public class FilePersistenceManager  {
 
                     str = JSONUtil.toJSON(encryptedBlock);
 
-                    try {
-                        writer.write(str);
-                        writer.newLine();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    writer.write(str);
+                    writer.newLine();
 
                 }
                writer.flush();
-                writer.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -78,38 +104,60 @@ public class FilePersistenceManager  {
 
         }
 
+    /**
+     * Decrypts a stored block. Version 2 blocks are authenticated (tampering, or moving a block
+     * to another record, fails decryption); blocks without a version use the legacy format.
+     */
+    private Block decryptBlock(EncryptedBlock encryptedBlock)
+    {
+        String str;
+        if (encryptedBlock.getVersion() != null && encryptedBlock.getVersion() == ENCRYPTION_VERSION) {
+            try {
+                str = CryptUtil.decryptAuthenticated(encryptedBlock.getEncryptedContents(), encryptedBlock.getEncryptedKey(),
+                        privateKey, associatedData(encryptedBlock.getStartTransactionId(), encryptedBlock.getEndTransactionId()));
+            } catch (GeneralSecurityException | IllegalArgumentException e) {
+                System.err.println("Rejecting block " + encryptedBlock.getStartTransactionId()
+                        + ": integrity check failed");
+                return null;
+            }
+        } else if (encryptedBlock.getVersion() == null) {
+            str = CryptUtil.decrypt(encryptedBlock.getEncryptedContents(), encryptedBlock.getEncryptedKey(), privateKey);
+        } else {
+            System.err.println("Unsupported block encryption version " + encryptedBlock.getVersion());
+            return null;
+        }
+        if (str == null)
+            return null;
+        return (Block) JSONUtil.fromJSON(str, Block.class);
+    }
+
 
 
     public Block getLastBlockWritten()
     {
 
 
-        try {
-            File dir = new File(persistenceDir);
-            File[] files = dir.listFiles();
-            if (files==null || files.length==0) {
-                return null;
-            }
+        File[] files = listBlockFiles();
+        if (files.length==0) {
+            return null;
+        }
 
-            Arrays.sort(files, Comparator.comparing(File::lastModified).reversed());
+        File file = files[files.length-1];
 
-            File file = files[0];
-
-                 BufferedReader reader = new BufferedReader(new FileReader(file));
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
                  String s = reader.readLine();
                  String lastBlockStr=null;
                  while (s != null) {
                      lastBlockStr = s;
                      s = reader.readLine();
                  }
+            if (lastBlockStr == null)
+                return null;
             EncryptedBlock encryptedBlock = (EncryptedBlock) JSONUtil.fromJSON(lastBlockStr, EncryptedBlock.class);
-            String str = CryptUtil.decrypt(encryptedBlock.getEncryptedContents(),encryptedBlock.getEncryptedKey(),privateKey);
+            if (encryptedBlock == null)
+                return null;
 
-            System.out.println(str);
-
-            Block block = (Block) JSONUtil.fromJSON(str, Block.class);
-
-            return block;
+            return decryptBlock(encryptedBlock);
 
 
         } catch (IOException e) {
@@ -119,86 +167,63 @@ public class FilePersistenceManager  {
         return null;
     }
 
-
-    private File findFile(File[] files, String transactionId)
+    /** Block files in the persistence directory, ordered by the start time encoded in their names. */
+    private File[] listBlockFiles()
     {
-        long txnTime = getTimeOfTransaction(transactionId);
+        File dir = new File(persistenceDir);
+        File[] files = dir.listFiles(f -> f.isFile() && parseTime(f.getName()) >= 0);
+        if (files == null)
+            return new File[0];
+        Arrays.sort(files, Comparator.comparingLong(f -> parseTime(f.getName())));
+        return files;
+    }
 
-        File file = files[0];
-        long fileTime = getTimeOfTransaction(file.getName());
 
-        if (txnTime<fileTime)
-            return null;
-
-        file = files[files.length-1];
-        fileTime = getTimeOfTransaction(file.getName());
-        if (txnTime>fileTime)
-            return null;
-
-        File fileToSearch =null;
-
-        // the transaction has to be in one of the files and the files are sorted , so use a binary search to locate the file.
-        int min =0; int max = files.length-1; int mid = (max-min)/2;
-        while(min<=max)
+    /**
+     * Returns the last file whose start time is &lt;= the transaction time (files sorted ascending),
+     * or null when the transaction predates every file.
+     */
+    static File findFile(File[] files, long txnTime)
+    {
+        File fileToSearch = null;
+        int min = 0;
+        int max = files.length - 1;
+        while (min <= max)
         {
-            file = files[mid];
-            fileTime = getTimeOfTransaction(file.getName()) ;
-            if (txnTime<fileTime)
-                max = mid;
-            else // (txnTime>=fileTime)
-            {
-                if (mid==max || getTimeOfTransaction(files[mid+1].getName())>txnTime)
-                {
-                    fileToSearch= file;
-                    break;
-                }
-
-                min = mid;
+            int mid = (min + max) >>> 1;
+            long fileTime = parseTime(files[mid].getName());
+            if (fileTime <= txnTime) {
+                fileToSearch = files[mid];
+                min = mid + 1;
+            } else {
+                max = mid - 1;
             }
-
-            mid = min + (max-min)/2;
-
-
         }
 
         return fileToSearch;
-
-  /*      for (int i=0;i<files.length;i++)
-        {
-            file = files[i];
-            fileTime = getTimeOfTransaction(file.getName()) ;
-            if (txnTime>fileTime)
-                fileToSearch = file;
-            else
-                break;
-
-        }
-        return fileToSearch;*/
     }
     public Block getLikelyBlock(String transactionId) {
 
-        try {
-            File dir = new File(persistenceDir);
-            File[] files = dir.listFiles();
-            if (files==null || files.length==0) {
-                return null;
-            }
+        long txnTime = parseTime(transactionId);
+        if (txnTime < 0)
+            return null;
 
-            Arrays.sort(files, Comparator.comparing(File::lastModified));
+        File[] files = listBlockFiles();
+        if (files.length==0) {
+            return null;
+        }
 
-            File file = findFile(files,transactionId);
-            if (file==null)
-                return null;
+        File file = findFile(files,txnTime);
+        if (file==null)
+            return null;
 
-            BufferedReader reader = new BufferedReader(new FileReader(file));
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String s = reader.readLine();
             while (s != null) {
                 EncryptedBlock encryptedBlock = (EncryptedBlock) JSONUtil.fromJSON(s, EncryptedBlock.class);
 
-                if (transactionInBlock(encryptedBlock,transactionId)) {
-                    String str = CryptUtil.decrypt(encryptedBlock.getEncryptedContents(),encryptedBlock.getEncryptedKey(),privateKey);
-                    Block block = (Block) JSONUtil.fromJSON(str, Block.class);
-                    return block;
+                if (encryptedBlock != null && transactionInBlock(encryptedBlock,txnTime)) {
+                    return decryptBlock(encryptedBlock);
                 }
                 s = reader.readLine();
             }
@@ -211,22 +236,27 @@ public class FilePersistenceManager  {
         return null;
     }
 
-    private long getTimeOfTransaction(String transactionId)
+    /** Parses the time component of "&lt;name&gt;-&lt;time&gt;"; returns -1 when it is not in that form. */
+    static long parseTime(String transactionId)
     {
-        return Long.parseLong(transactionId.split("-")[1]);
+        if (transactionId == null)
+            return -1;
+        int idx = transactionId.lastIndexOf('-');
+        if (idx < 0 || idx == transactionId.length() - 1)
+            return -1;
+        try {
+            return Long.parseLong(transactionId.substring(idx + 1));
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
-    private boolean transactionInBlock(EncryptedBlock block, String transactionId) {
+    private boolean transactionInBlock(EncryptedBlock block, long txnTime) {
 
-        long txnTime = getTimeOfTransaction(transactionId);
+        long txnStartInBlock = parseTime(block.startTransactionId);
+        long txnEndInBlock = parseTime(block.endTransactionId);
 
-        long txnStartInBlock = getTimeOfTransaction(block.startTransactionId);
-        long txnEndInBlock = getTimeOfTransaction(block.endTransactionId);
-
-        if (txnStartInBlock<= txnTime && txnEndInBlock >= txnTime)
-            return true;
-        else
-            return false;
+        return txnStartInBlock <= txnTime && txnEndInBlock >= txnTime;
 
     }
 }

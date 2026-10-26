@@ -1,0 +1,10 @@
+target/
+
+# Key material and keystores are supplied at runtime and must never be committed.
+*.jks
+*.p12
+*.pfx
+*.der
+*.key
+*.pem
+dependency-reduced-pom.xml

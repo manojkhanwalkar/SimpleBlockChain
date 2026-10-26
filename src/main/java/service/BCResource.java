@@ -12,6 +12,8 @@ import wal.WALManager;
 import wal.WALRecord;
 
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -74,7 +76,7 @@ public class BCResource {
     @Timed
     @Path("/submit")
     @Produces(MediaType.APPLICATION_JSON)
-    public TransactionResponse submit(Transaction request) {
+    public TransactionResponse submit(@NotNull @Valid Transaction request) {
 
         String tranId = nodeName +"-" + System.nanoTime();
         request.setTransactionId(tranId);
@@ -92,7 +94,7 @@ public class BCResource {
     @Timed
     @Path("/query")
     @Produces(MediaType.APPLICATION_JSON)
-    public Transaction verify(TransactionQuery request) {
+    public Transaction verify(@NotNull @Valid TransactionQuery request) {
 
         return transactionManager.query(request.getTransactionId());
 
