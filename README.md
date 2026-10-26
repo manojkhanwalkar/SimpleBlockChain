@@ -90,3 +90,28 @@ The code does not cater to the following areas, which would need to be provided 
 6. Zookeeper is used to provide service discovery and usage is hardcoded into the client and node code.
 7. The file system and service discovery using zookeeper are not cleanly abstracted awy to enable pluggable mechanisms.
 8. Only transactions committed to disk can be queried. The ones still in memory and WAL are not accessible for querying.
+
+**Running a node (keys and secrets)**
+
+No key material is kept in the repository. Provide it at runtime:
+
+| Variable | Purpose |
+|---|---|
+| `BC_KEYSTORE_PATH` | TLS keystore used by the HTTPS application and admin connectors in `bc.yml` |
+| `BC_KEYSTORE_PASSWORD` | Password for that keystore |
+| `BC_BLOCK_CERT_FILE` | PEM certificate whose RSA public key encrypts blocks written to disk |
+| `BC_BLOCK_KEY_FILE` | Matching PKCS#8 DER RSA private key, used to read blocks back |
+
+`BC_BLOCK_CERT_FILE` and `BC_BLOCK_KEY_FILE` may also be passed as `-D` system properties. The node refuses to start if any of them is missing.
+
+Example key generation (keep the output outside the repository):
+
+```
+keytool -genkeypair -alias bc -keyalg RSA -keysize 3072 -storetype PKCS12 -keystore bc.p12 -dname CN=localhost -ext SAN=dns:localhost
+openssl req -x509 -newkey rsa:3072 -nodes -days 365 -subj /CN=bc-block -keyout blockrsakey.pem -out blockrsacertificate.pem
+openssl pkcs8 -topk8 -inform PEM -outform DER -in blockrsakey.pem -out blockrsakey.der -nocrypt
+```
+
+Blocks are encrypted with AES-256-GCM (the key is wrapped with RSA-OAEP/SHA-256), so a modified block fails to decrypt. Blocks written by earlier versions can still be read.
+
+The admin connector (port 8181) listens on 127.0.0.1 only.

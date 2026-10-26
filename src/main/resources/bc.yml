@@ -7,8 +7,9 @@ server:
   applicationConnectors:
     - type: https
       port: 8180
-      keyStorePath: /home/manoj/IdeaProjects/SimpleBlockChain/src/main/resources/bc.jks
-      keyStorePassword: password
+      # TLS keystore and its password are supplied at runtime; never commit them.
+      keyStorePath: ${BC_KEYSTORE_PATH}
+      keyStorePassword: ${BC_KEYSTORE_PASSWORD}
     #this requires the alpn-boot library on the JVM's boot classpath
     #- type: h2
     #  port: 8445
@@ -17,5 +18,7 @@ server:
   adminConnectors:
     - type: https
       port: 8181
-      keyStorePath: /home/manoj/IdeaProjects/SimpleBlockChain/src/main/resources/bc.jks
-      keyStorePassword: password
+      # admin endpoints (metrics, thread dumps, tasks) have no authentication: keep them local
+      bindHost: 127.0.0.1
+      keyStorePath: ${BC_KEYSTORE_PATH}
+      keyStorePassword: ${BC_KEYSTORE_PASSWORD}
