@@ -9,7 +9,6 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
 
 public class Connection {
 
@@ -21,17 +20,10 @@ public class Connection {
 
 
 
-    private void initConnectionProps()
-    {
-        final Properties props = System.getProperties();
-        props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
-
-    }
 
     public Connection(String target)
     {
         this.target = target;
-        initConnectionProps();
         client = HttpClient.newHttpClient();
     }
 
@@ -64,7 +56,6 @@ public class Connection {
                     client.send(httprequest, HttpResponse.BodyHandlers.ofString());
 
 
-            System.out.println(response);
 
            if (response.statusCode()==200)
                return Optional.of(response.body());

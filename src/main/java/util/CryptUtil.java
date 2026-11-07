@@ -1,13 +1,18 @@
 package util;
 
 import javax.crypto.*;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.OAEPParameterSpec;
+import javax.crypto.spec.PSource;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.MGF1ParameterSpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
@@ -120,41 +125,61 @@ public class CryptUtil {
 
     static SecureRandom secureRandom = new SecureRandom();
 
-    public static SymKeyStringTuple encrypt(String message, PublicKey key)
+    private static final int GCM_IV_BYTES = 12;
+    private static final int GCM_TAG_BITS = 128;
+    private static final String RSA_OAEP = "RSA/ECB/OAEPWithSHA-256AndMGF1Padding";
+    private static final OAEPParameterSpec OAEP_SHA256 =
+            new OAEPParameterSpec("SHA-256", "MGF1", MGF1ParameterSpec.SHA256, PSource.PSpecified.DEFAULT);
+
+    /**
+     * Hybrid encryption with integrity: a fresh AES-256-GCM key encrypts the message (random 96-bit IV,
+     * prepended to the ciphertext, and {@code aad} bound as associated data) and is wrapped with RSA-OAEP(SHA-256).
+     */
+    public static SymKeyStringTuple encryptAuthenticated(String message, PublicKey key, byte[] aad) throws GeneralSecurityException
     {
-        try {
-            KeyGenerator generator = KeyGenerator.getInstance("AES");
-            generator.init(128); // The AES key size in number of bits
-            SecretKey secKey = generator.generateKey();
+        KeyGenerator generator = KeyGenerator.getInstance("AES");
+        generator.init(256);
+        SecretKey secKey = generator.generateKey();
 
-            Cipher cipher =  Cipher.getInstance("AES");
-            cipher.init(Cipher.ENCRYPT_MODE, secKey);
-            String encryptedMessage = Base64.getEncoder().encodeToString(cipher.doFinal(message.getBytes("UTF-8")));
+        byte[] iv = new byte[GCM_IV_BYTES];
+        secureRandom.nextBytes(iv);
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        cipher.init(Cipher.ENCRYPT_MODE, secKey, new GCMParameterSpec(GCM_TAG_BITS, iv));
+        if (aad != null)
+            cipher.updateAAD(aad);
+        byte[] ct = cipher.doFinal(message.getBytes(StandardCharsets.UTF_8));
 
-            Cipher cipher1 = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-            cipher1.init(Cipher.PUBLIC_KEY, key);
-            String encryptedKey = Base64.getEncoder().encodeToString(cipher1.doFinal(secKey.getEncoded()));
+        byte[] out = new byte[iv.length + ct.length];
+        System.arraycopy(iv, 0, out, 0, iv.length);
+        System.arraycopy(ct, 0, out, iv.length, ct.length);
 
-            SymKeyStringTuple tuple = new SymKeyStringTuple();
-            tuple.key = encryptedKey;
-            tuple.message= encryptedMessage;
+        Cipher rsa = Cipher.getInstance(RSA_OAEP);
+        rsa.init(Cipher.ENCRYPT_MODE, key, OAEP_SHA256);
 
-            return tuple;
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
+        SymKeyStringTuple tuple = new SymKeyStringTuple();
+        tuple.key = Base64.getEncoder().encodeToString(rsa.doFinal(secKey.getEncoded()));
+        tuple.message = Base64.getEncoder().encodeToString(out);
+        return tuple;
+    }
 
-        return null;
+    /** Reverses {@link #encryptAuthenticated}; throws if the ciphertext, key or associated data was altered. */
+    public static String decryptAuthenticated(String message, String key, PrivateKey privateKey, byte[] aad) throws GeneralSecurityException
+    {
+        Cipher rsa = Cipher.getInstance(RSA_OAEP);
+        rsa.init(Cipher.DECRYPT_MODE, privateKey, OAEP_SHA256);
+        byte[] rawKey = rsa.doFinal(Base64.getDecoder().decode(key));
+
+        byte[] in = Base64.getDecoder().decode(message);
+        if (in.length < GCM_IV_BYTES + GCM_TAG_BITS / 8)
+            throw new AEADBadTagException("ciphertext too short");
+
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(rawKey, "AES"),
+                new GCMParameterSpec(GCM_TAG_BITS, in, 0, GCM_IV_BYTES));
+        if (aad != null)
+            cipher.updateAAD(aad);
+        byte[] pt = cipher.doFinal(in, GCM_IV_BYTES, in.length - GCM_IV_BYTES);
+        return new String(pt, StandardCharsets.UTF_8);
     }
 
 /*
@@ -193,6 +218,11 @@ public class CryptUtil {
     }*/
 
 
+    /**
+     * Legacy format only (AES/ECB without integrity, RSA PKCS#1 v1.5 key wrap). Kept so blocks written
+     * before the authenticated format can still be read; new data uses {@link #encryptAuthenticated}.
+     */
+    @Deprecated
     public static String decrypt(String message, String key, PrivateKey privateKey)  {
 
       try {

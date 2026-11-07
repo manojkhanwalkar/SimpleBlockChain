@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.io.IOException;
@@ -12,10 +14,33 @@ public class JSONUtil {
 
     static ObjectMapper mapper = new ObjectMapper();
 
+    /**
+     * Polymorphic type ids are read back from WAL and block files. Only the project's own model classes
+     * and plain JDK collections may be instantiated from them, never arbitrary classes named in the data.
+     */
+    static final PolymorphicTypeValidator TYPE_VALIDATOR = BasicPolymorphicTypeValidator.builder()
+            .allowIfSubType("blockchain.")
+            .allowIfSubType("data.")
+            .allowIfSubType("java.util.ArrayList")
+            .allowIfSubType("java.util.LinkedList")
+            .allowIfSubType("java.util.HashMap")
+            .allowIfSubType("java.util.LinkedHashMap")
+            .allowIfSubType("java.util.TreeMap")
+            .allowIfSubType("java.util.HashSet")
+            .allowIfSubType("java.util.LinkedHashSet")
+            .allowIfSubType("java.util.Collections$")
+            .build();
+
+    /** Applies the restricted default typing used for all persisted JSON. */
+    public static ObjectMapper configureTyping(ObjectMapper m)
+    {
+        return m.activateDefaultTyping(TYPE_VALIDATOR, ObjectMapper.DefaultTyping.OBJECT_AND_NON_CONCRETE);
+    }
+
 
     static {
         mapper.registerModule(new JavaTimeModule());
-        mapper.enableDefaultTyping();
+        configureTyping(mapper);
         mapper.configure(MapperFeature.USE_GETTERS_AS_SETTERS, false);
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 

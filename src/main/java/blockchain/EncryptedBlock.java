@@ -5,6 +5,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class EncryptedBlock {
 
 
+    /** Encryption format version; null for blocks written by the legacy (unauthenticated) format. */
+    @JsonProperty
+    Integer version;
+
     @JsonProperty
     String encryptedContents;
 
@@ -16,6 +20,14 @@ public class EncryptedBlock {
 
     @JsonProperty
     String endTransactionId;
+
+    public Integer getVersion() {
+        return version;
+    }
+
+    public void setVersion(Integer version) {
+        this.version = version;
+    }
 
     public String getStartTransactionId() {
         return startTransactionId;
